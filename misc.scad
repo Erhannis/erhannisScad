@@ -1,3 +1,4 @@
+// I guess I should mention that while this method has been 90% overhauled, its essence originally came from inside the nema17_stepper module of https://github.com/revarbat/BOSL
 module flattedShaft(h=1, r=0.5, center=false) {
   translate([0,0,-0.5*h*(center?1:0)])
   difference() {
