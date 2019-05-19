@@ -10,3 +10,13 @@ module flattedShaft(h=1, r=0.5, center=false) {
 }
 
 flattedShaft(h=5,r=2.5, $fn=60);
+
+// Make a block go away.  Useful for debugging probably.
+module skip() {
+  scale([0,0,0]) { // Just in case
+    difference() {
+      children();
+      children();
+    }
+  }
+}
