@@ -110,8 +110,8 @@ module pinJoiner(depth=5,width=5,height=15,width_slop=DEF_WSLOP,pin_height_slop=
     difference() {
         translate([width_slop/4,0,0]) cube([width - width_slop/2,depth,height]);
         translate([-1,0,height-depth]) rotate([45,0,0]) cube($FOREVER);
-        translate([0,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3)-pin_height_slop/4)])
-            pinJoinerPin(depth*PIN_DEPTH_FACTOR,width*3,PIN_HEIGHT_FACTOR*height/3 + pin_height_slop/2,pin_height_slop=0,handle=false);
+        translate([0,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3))])
+            pinJoinerPin(depth,width*3,height,pin_height_slop=-pin_height_slop,handle=false);
         if (bottomOverhang) {
             translate([-1,0,depth]) rotate([-135,0,0]) cube($FOREVER);
         }
@@ -128,28 +128,31 @@ module pinJoinerCutout(depth=5,width=5,height=15,width_slop=DEF_WSLOP,pinLengthX
             translate([-1,0,depth]) rotate([-135,0,0]) cube($FOREVER);
         }
     }
-    translate([width,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3))-pin_height_slop/4])
-        pinJoinerPin(depth*PIN_DEPTH_FACTOR,pinLengthXP,PIN_HEIGHT_FACTOR*height/3 + pin_height_slop/2,pin_height_slop=0,wedgeAngle=wedgeAngle,handle=false);
-    translate([0,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3))-pin_height_slop/4])
+    translate([width,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3))])
+        pinJoinerPin(depth,pinLengthXP,height,pin_height_slop=-pin_height_slop,wedgeAngle=wedgeAngle,handle=false);
+    translate([0,-depth*PIN_DEPTH_FACTOR/2 + depth/2,height/3+(height/3-(PIN_HEIGHT_FACTOR*height/3))])
         mirror([1,0,0])
-            pinJoinerPin(depth*PIN_DEPTH_FACTOR,pinLengthXM,PIN_HEIGHT_FACTOR*height/3 + pin_height_slop/2,pin_height_slop=0,wedgeAngle=wedgeAngle,handle=false);
+            pinJoinerPin(depth,pinLengthXM,height,pin_height_slop=-pin_height_slop,wedgeAngle=wedgeAngle,handle=false);
 }
 
-module pinJoinerPin(depth=5*PIN_DEPTH_FACTOR,width=15,height=5*PIN_HEIGHT_FACTOR,wedgeAngle=60,pin_height_slop=DEF_PHSLOP,handle=true) {
+// Note that the depth and height are that of the joiner, not of the pin itself.
+// ...I'm kinda questioning that decision, as it makes it hard for a user to figure out the dims.
+module pinJoinerPin(depth=5,width=15,height=15,wedgeAngle=60,pin_height_slop=DEF_PHSLOP,handle=true) {
     translate([0,0,pin_height_slop/4]) {
-        h0 = height-pin_height_slop/2;
+        d0 = depth*PIN_DEPTH_FACTOR;
+        h0 = (height*PIN_HEIGHT_FACTOR/3)-pin_height_slop/2;
         difference() {
-            cube([width,depth,h0]);
-            translate([-1,0,h0-depth]) rotate([45,0,0]) cube($FOREVER);
-            translate([width,depth,-1]) rotate([0,0,-90-wedgeAngle]) cube($FOREVER);
+            cube([width,d0,h0]);
+            translate([-1,0,h0-d0]) rotate([45,0,0]) cube($FOREVER);
+            translate([width,d0,-1]) rotate([0,0,-90-wedgeAngle]) cube($FOREVER);
         }
         if (handle) {
-            translate([0,-h0+depth,0]) cube([depth,h0,h0]);
+            translate([0,-h0+d0,0]) cube([d0,h0,h0]);
         }
     }
 }
 
-* union() { // Pin joiner example
+ union() { // Pin joiner example
     // Female
     difference() {
         translate([0,-10,0]) cube([15,10,19]);
