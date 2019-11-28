@@ -163,5 +163,5 @@ module pinJoinerPin(depth=5*PIN_DEPTH_FACTOR,width=15,height=5*PIN_HEIGHT_FACTOR
     }
 
     // Pin
-    translate([-5,3,5/3]) rotate([-90,0,0]) pinJoinerPin();
+    translate([-5,3,0]) rotate([-90,0,0]) translate([0,-5*PIN_DEPTH_FACTOR,-DEF_PHSLOP/4]) pinJoinerPin();
 }
