@@ -94,6 +94,9 @@ rendering the pin separately or after the other components.
 ...I'm also experiencing weird problems where old things keep getting
 rendered until I clear the cache.  Dunno if that's something triggered
 by this particular file or what.
+
+*OTHER* WARNING!  Do note that the pins can snap off, leaving your piece
+rather difficult to disassemble / finish assembling.
 */
 
 DEF_WSLOP = 0.4;
@@ -146,7 +149,7 @@ module pinJoinerPin(depth=5*PIN_DEPTH_FACTOR,width=15,height=5*PIN_HEIGHT_FACTOR
     }
 }
 
-union() { // Pin joiner example
+* union() { // Pin joiner example
     // Female
     difference() {
         translate([0,-10,0]) cube([15,10,19]);
