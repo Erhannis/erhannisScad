@@ -152,7 +152,7 @@ module pinJoinerPin(depth=5,width=15,height=15,wedgeAngle=60,pin_height_slop=DEF
     }
 }
 
- union() { // Pin joiner example
+* union() { // Pin joiner example
     // Female
     difference() {
         translate([0,-10,0]) cube([15,10,19]);
