@@ -168,3 +168,37 @@ module pinJoinerPin(depth=5,width=15,height=15,wedgeAngle=60,pin_height_slop=DEF
     // Pin
     translate([-5,3,0]) rotate([-90,0,0]) translate([0,-5*PIN_DEPTH_FACTOR,-DEF_PHSLOP/4]) pinJoinerPin();
 }
+
+
+//// Bearing slot
+
+/**
+Slot to hold a bearing.  The result should be removed from a solid surface.
+`size` is an array[3].
+`nub_diam` is the diameter of the nub.
+`nub_scale` is how flat to make the bump, basically.  (It starts off a half-sphere.)
+`nub_stem` is how much of a cylinder to insert between the wall and the nub.
+The nub is on the face perpendicular to the first dimension of `size`.
+
+Here's an example that worked pretty well with 686 bearings:
+difference() {
+  cube([B_WIDTH*3,B_BORE*1.1,B_DIAM*3],center=true);
+  bearingSlot([B_WIDTH+0.2,B_DIAM*1.1,B_DIAM*1.5], nub_diam=B_BORE*1.1, nub_stem=0.1);
+}
+*/
+module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef) {
+  if (nub_stem == undef) {
+    bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0);
+  } else {
+    for (i = [0,1]) mirror([0,0,i])
+      translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
+    difference() {
+      cube(size, center=true);
+      for (i = [0,1]) mirror([i,0,0]) translate([nub_stem-size[0]/2,0,0]) {
+        scale([nub_scale,1,1]) sphere(d=nub_diam);
+        rotate([0,-90,0]) cylinder(d=nub_diam, h=nub_stem); //TODO Should there be a ledge to rest on, rather than a shaft?
+      }
+      //OYp(); // For inspection
+    }
+  }
+}
