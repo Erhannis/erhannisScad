@@ -178,27 +178,53 @@ Slot to hold a bearing.  The result should be removed from a solid surface.
 `nub_diam` is the diameter of the nub.
 `nub_scale` is how flat to make the bump, basically.  (It starts off a half-sphere.)
 `nub_stem` is how much of a cylinder to insert between the wall and the nub.
+`nub_slope_angle` is the angle of the slope cut into the nub.  It's on the -size[1] face.  0 is perpendicular to the wall, and optimized out.
+`nub_slope_translation` is how far from the base of the nub the slope is translated.
 The nub is on the face perpendicular to the first dimension of `size`.
+`dummy` is whether to use a simple dummy shape instead, for faster rendering.
 
 Here's an example that worked pretty well with 686 bearings:
 difference() {
   cube([B_WIDTH*3,B_BORE*1.1,B_DIAM*3],center=true);
-  bearingSlot([B_WIDTH+0.2,B_DIAM*1.1,B_DIAM*1.5], nub_diam=B_BORE*1.1, nub_stem=0.1);
+  bearingSlot([SLOT_WIDTH,B_DIAM*1.1,B_DIAM*1.5], nub_diam=B_BORE*1.1, nub_stem=SLOT_FREE/2, nub_slope_angle=60, nub_slope_translation=0);
 }
 */
-module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef) {
-  if (nub_stem == undef) {
-    bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0);
+module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angle=60, nub_slope_translation=0, dummy=false) {
+  if (dummy) {
   } else {
-    for (i = [0,1]) mirror([0,0,i])
-      translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
-    difference() {
-      cube(size, center=true);
-      for (i = [0,1]) mirror([i,0,0]) translate([nub_stem-size[0]/2,0,0]) {
-        scale([nub_scale,1,1]) sphere(d=nub_diam);
-        rotate([0,-90,0]) cylinder(d=nub_diam, h=nub_stem); //TODO Should there be a ledge to rest on, rather than a shaft?
+    if (nub_stem == undef) {
+      bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0, nub_slope_angle=nub_slope_angle, nub_slope_translation=nub_slope_translation, dummy=dummy);
+    } else {
+      for (i = [0,1]) mirror([0,0,i])
+        translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
+      difference() {
+        cube(size, center=true);
+        for (i = [0,1]) mirror([i,0,0]) translate([nub_stem-size[0]/2,0,0]) {
+          difference() {
+            union() {
+              scale([nub_scale,1,1]) sphere(d=nub_diam);
+              rotate([0,-90,0]) cylinder(d=nub_diam, h=nub_stem); //TODO Should there be a ledge to rest on, rather than a shaft?
+            }
+            translate([-nub_stem+nub_slope_translation,-nub_diam/2,0]) rotate([0,0,nub_slope_angle]) OYm();
+          }
+        }
+        //OZp(); // For inspection
       }
-      //OYp(); // For inspection
     }
+  }
+}
+
+/**
+Tool for placing a bearing in a bearingSlot.  See bearingSlot.
+Has some slop built in.
+*/
+module bearingPlacer(size, bearing_diam) {
+  difference() {
+    translate([0,-(bearing_diam*1.5)/2+bearing_diam,0]) union() {
+      cube([size[0]*0.9,bearing_diam*1.5,size[2]*0.95],center=true);
+      for (i = [0,1]) mirror([0,0,i])
+        translate([0,0,(size[2]*0.95)/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0]*0.9,bearing_diam*1.5,sqrt(1/2)*size[0]*0.9],center=true);
+    }
+    translate([0,bearing_diam/2,0]) cube([$FOREVER,bearing_diam,bearing_diam],center=true);
   }
 }
