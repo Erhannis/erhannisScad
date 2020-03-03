@@ -191,6 +191,9 @@ difference() {
 */
 module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angle=60, nub_slope_translation=0, dummy=false) {
   if (dummy) {
+    for (i = [0,1]) mirror([0,0,i])
+      translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
+    cube(size, center=true);
   } else {
     if (nub_stem == undef) {
       bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0, nub_slope_angle=nub_slope_angle, nub_slope_translation=nub_slope_translation, dummy=dummy);
