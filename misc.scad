@@ -1,4 +1,4 @@
-$FOREVER = 1000;
+$FOREVER = 2000;
 $EPS=1e-300;
 
 // I guess I should mention that while this method has been 90% overhauled, its essence originally came from inside the nema17_stepper module of https://github.com/revarbat/BOSL
@@ -44,6 +44,12 @@ module flat3d() {
     children();
 }
 
+module cmirror(v) {
+  children();
+  mirror(v) {
+    children();
+  }
+}
 
 //// Octants
 // Useful for cutting away sections of the...everything
@@ -182,21 +188,29 @@ Slot to hold a bearing.  The result should be removed from a solid surface.
 `nub_slope_translation` is how far from the base of the nub the slope is translated.
 The nub is on the face perpendicular to the first dimension of `size`.
 `dummy` is whether to use a simple dummy shape instead, for faster rendering.
+`access_depth`, if specified, is how much of a dummy tunnel to add for inserting the bearing.
 
 Here's an example that worked pretty well with 686 bearings:
 difference() {
   cube([B_WIDTH*3,B_BORE*1.1,B_DIAM*3],center=true);
-  bearingSlot([SLOT_WIDTH,B_DIAM*1.1,B_DIAM*1.5], nub_diam=B_BORE*1.1, nub_stem=SLOT_FREE/2, nub_slope_angle=60, nub_slope_translation=0);
+  bearingSlot([SLOT_WIDTH,B_DIAM*1.1,B_DIAM*1.5], nub_diam=B_BORE*1.1, nub_stem=SLOT_FREE/2, nub_slope_angle=60, nub_slope_translation=-SLOT_FREE/2);
 }
 */
-module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angle=60, nub_slope_translation=0, dummy=false) {
+module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angle=60, nub_slope_translation=0, access_depth=undef, dummy=false) {
   if (dummy) {
     for (i = [0,1]) mirror([0,0,i])
       translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
     cube(size, center=true);
+    if (access_depth != undef) {
+      translate([0,-size[1]/2-access_depth/2+0.0001,0]) {
+        for (i = [0,1]) mirror([0,0,i])
+          translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],access_depth,sqrt(1/2)*size[0]],center=true);
+        cube([size[0],access_depth,size[2]], center=true);
+      }
+    }
   } else {
     if (nub_stem == undef) {
-      bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0, nub_slope_angle=nub_slope_angle, nub_slope_translation=nub_slope_translation, dummy=dummy);
+      bearingSlot(size=size, nub_diam=nub_diam, nub_scale=nub_scale, nub_stem=0.0, nub_slope_angle=nub_slope_angle, nub_slope_translation=nub_slope_translation, access_depth=access_depth, dummy=dummy);
     } else {
       for (i = [0,1]) mirror([0,0,i])
         translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
@@ -212,6 +226,13 @@ module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angl
           }
         }
         //OZp(); // For inspection
+      }
+      if (access_depth != undef) {
+        translate([0,-size[1]/2-access_depth/2+0.0001,0]) {
+          for (i = [0,1]) mirror([0,0,i])
+            translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],access_depth,sqrt(1/2)*size[0]],center=true);
+          cube([size[0],access_depth,size[2]], center=true);
+        }
       }
     }
   }
