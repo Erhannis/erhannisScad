@@ -89,6 +89,22 @@ module OXpYpZm(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,-1]);}
 module OXpYpZp(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,+1]);}
 
 
+//// Undercut
+
+module undercut(size=[1,1,1], center=false) {
+  translate([center ? -size[0]/2 : 0, center ? -size[1]/2 : 0, center ? -size[2]/2 : 0]) {
+    cube(size);
+    translate([0,0,size[2]])
+    scale([size[0],size[1],size[0]])
+    difference() {
+      cube(1);
+      rotate([0,-45,0])
+        cube(3);
+    }
+  }
+}
+
+
 //// Pin joiner
 
 /*
@@ -251,4 +267,26 @@ module bearingPlacer(size, bearing_diam) {
     }
     translate([0,bearing_diam/2,0]) cube([$FOREVER,bearing_diam,bearing_diam],center=true);
   }
+}
+
+
+/*From https://gist.github.com/boredzo/fde487c724a40a26fa9c
+ *
+ *skew takes an array of six angles:
+ *x along y
+ *x along z
+ *y along x
+ *y along z
+ *z along x
+ *z along y
+ */
+module skew(dims) {
+  matrix = [
+    [ 1, tan(dims[0]), tan(dims[1]), 0 ],
+    [ tan(dims[2]), 1, tan(dims[3]), 0 ],
+    [ tan(dims[4]), tan(dims[5]), 1, 0 ],
+    [ 0, 0, 0, 1 ]
+  ];
+  multmatrix(matrix)
+    children();
 }
