@@ -290,3 +290,37 @@ module skew(dims) {
   multmatrix(matrix)
     children();
 }
+
+/**
+Makes a triangle.
+Defaults to right triangle.
+Centered on the midpoint of the base.
+Rotated to point at `dir`.
+*/
+module triangle(height=10,width=undef,dir=[0,1]) {
+  if (width == undef) {
+    triangle(height=height,width=height*2,dir=dir);
+  } else {
+    from = [0,0];
+    rotate([0,0,atan2(dir[1]-from[1],dir[0]-from[0])-90]) scale([width/(height*2),1]) difference() {
+      rotate(45) square(height,center=true);
+      translate([0,-height]) square(height*2,center=true);
+    }
+  }
+}
+
+/**
+I didn't do the math on this; I just adjusted numbers until it lined up really close.
+*/
+module halfPyramid(height=20) {
+  //translate([0,0,-height])
+  scale(height*1.7305) {
+    //translate([-0.816,0,0])
+    //translate([0,0,-0.57])
+    difference() {
+      translate([-0.0006,0,-0.28817]) rotate([45,35.3,0]) cube(1,center=true);
+      OXm();
+      OZm();
+    }
+  }
+}
