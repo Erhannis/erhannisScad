@@ -51,6 +51,13 @@ module cmirror(v) {
   }
 }
 
+module ctranslate(v) {
+  children();
+  translate(v) {
+    children();
+  }
+}
+
 //// Octants
 // Useful for cutting away sections of the...everything
 
