@@ -310,8 +310,8 @@ module triangle(height=10,width=undef,dir=[0,1]) {
   } else {
     from = [0,0];
     rotate([0,0,atan2(dir[1]-from[1],dir[0]-from[0])-90]) scale([width/(height*2),1]) difference() {
-      rotate(45) square(height,center=true);
-      translate([0,-height]) square(height*2,center=true);
+      rotate(45) square(height*sqrt(2),center=true);
+      translate([0,-height*sqrt(2)]) square(height*sqrt(2)*2,center=true);
     }
   }
 }
