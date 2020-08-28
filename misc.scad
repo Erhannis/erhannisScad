@@ -276,7 +276,7 @@ module bearingPlacer(size, bearing_diam) {
   }
 }
 
-module slot(size) {
+module vslot(size) {
   translate([0,-(size[1]*1.5)/2+size[1],0]) union() {
     cube([size[0]*0.9,size[1]*1.5,size[2]*0.95],center=true);
     for (i = [0,1]) mirror([0,0,i])
