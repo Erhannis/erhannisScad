@@ -58,6 +58,39 @@ module ctranslate(v) {
   }
 }
 
+module crotate(v) {
+  children();
+  rotate(v) {
+    children();
+  }
+}
+
+module cscale(v) {
+  children();
+  scale(v) {
+    children();
+  }
+}
+
+//// Shorthands
+module tx(dx) {
+  translate([dx,0,0]) {
+    children();
+  }
+}
+
+module ty(dy) {
+  translate([dy,0,0]) {
+    children();
+  }
+}
+
+module tz(dz) {
+  translate([dz,0,0]) {
+    children();
+  }
+}
+
 //// Octants
 // Useful for cutting away sections of the...everything
 
@@ -96,7 +129,7 @@ module OXpYpZm(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,-1]);}
 module OXpYpZp(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,+1]);}
 
 
-//// Undercut
+//// Overhang tools
 
 module undercut(size=[1,1,1], center=false) {
   translate([center ? -size[0]/2 : 0, center ? -size[1]/2 : 0, center ? -size[2]/2 : 0]) {
@@ -110,6 +143,30 @@ module undercut(size=[1,1,1], center=false) {
     }
   }
 }
+
+module ledge(w, h) {
+  translate([-w/2,0,-h])
+    difference() {
+      cube([w,h,h]);
+      rotate([45,0,0]) OZm();
+    }
+}
+//ledge(20,10);
+
+module vslot(size) {
+  cube([size[0],size[1],size[2]],center=true);
+  for (i = [0,1]) mirror([0,0,i])
+    translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
+}
+
+module house(size, center=true) {
+  cube([size[0],size[1],size[2]],center=center);
+  difference() {
+    translate([0,0,center ? size[2]/2 : size[2]]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=center);
+    OZm();
+  }
+}
+//house([10,10,10]);
 
 
 //// Pin joiner
@@ -262,7 +319,7 @@ module bearingSlot(size, nub_diam, nub_scale=0.1, nub_stem=undef, nub_slope_angl
 }
 
 /**
-Tool for placing a bearing in a bearingSlot.  See bearingSlot.
+Tool for placing a bearing in a bearingSlot.  See bearingSlot, and bearingPlacerStick.
 Has some slop built in.
 */
 module bearingPlacer(size, bearing_diam) {
@@ -276,13 +333,22 @@ module bearingPlacer(size, bearing_diam) {
   }
 }
 
-module vslot(size) {
-  translate([0,-(size[1]*1.5)/2+size[1],0]) union() {
-    cube([size[0]*0.9,size[1]*1.5,size[2]*0.95],center=true);
-    for (i = [0,1]) mirror([0,0,i])
-      translate([0,0,(size[2]*0.95)/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0]*0.9,size[1]*1.5,sqrt(1/2)*size[0]*0.9],center=true);
+module bearingPlacerStick(size, bearing_diam, outer=true) {
+  SY = size[1];
+  if (!outer) {
+      cube([size[0]*0.9,SY,bearing_diam],center=true);
+  } else {
+    difference() {
+      translate([0,-(SY)/2+bearing_diam,0]) union() {
+        cube([size[0]*0.9,SY,size[2]*0.95],center=true);
+        translate([0,0,(size[2]*0.95)/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0]*0.9,SY,sqrt(1/2)*size[0]*0.9],center=true);
+      }
+      cube([$FOREVER,$FOREVER,bearing_diam],center=true);
+      OZm();
+    }
   }
 }
+//bearingPlacerStick([10,40,20],10,false);
 
 /*From https://gist.github.com/boredzo/fde487c724a40a26fa9c
  *
@@ -339,7 +405,6 @@ module halfPyramid(height=20) {
   }
 }
 
-
 // A few things from CSG.scad
 
 module cubeAt(v, width) {
@@ -382,3 +447,20 @@ module line2(p0, p1, d=1) {
     }
 }
 
+// For BOSL joiners
+function joiner_depth(w=10, h=20, a=30) = (h/2 - w/3)*tan(a);
+
+
+module peg(d, h, taper_d=undef, taper_l=5, double_taper=false) {
+  if (taper_d == undef) {
+    peg(d=d,h=h,taper_d=d*0.75,taper_l=taper_l,double_taper=double_taper);
+  } else {
+    if (double_taper) {
+      cmirror([0,0,1]) translate([0,0,(h-taper_l*2)/2]) cylinder(h=taper_l,d1=d,d2=taper_d);
+    } else {
+      translate([0,0,(h-taper_l*2)/2]) cylinder(h=taper_l,d1=d,d2=taper_d);
+      mirror([0,0,1]) translate([0,0,(h-taper_l*2)/2]) cylinder(h=taper_l,d=d);
+    }
+    cylinder(h=h-taper_l*2,d=d,center=true);
+  }
+}
