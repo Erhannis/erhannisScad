@@ -80,13 +80,13 @@ module tx(dx) {
 }
 
 module ty(dy) {
-  translate([dy,0,0]) {
+  translate([0,dy,0]) {
     children();
   }
 }
 
 module tz(dz) {
-  translate([dz,0,0]) {
+  translate([0,0,dz]) {
     children();
   }
 }
