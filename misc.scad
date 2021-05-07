@@ -464,3 +464,15 @@ module peg(d, h, taper_d=undef, taper_l=5, double_taper=false) {
     cylinder(h=h-taper_l*2,d=d,center=true);
   }
 }
+
+module nailTab(hole=1.5,head=11,back=1,supportF=1.5,t=3,stickout=0) {
+    LW = head*supportF;
+    translate([-LW/2,0,0]) difference() {
+        union() {
+            cylinder(d=LW,h=t);
+            ty(-LW/2) cube([LW/2+stickout,LW,t]);
+        }
+        tz(back) cylinder(d=head,h=t);
+        cylinder(d=hole,h=t);
+    }
+}
