@@ -19,7 +19,7 @@ module slice(slice_z=0, drop_z=true, do_hull=true) {
     }
 }
 
-module lid_inner(slice_z=0, size=1, size_r=undef, size_h=undef) {
+module lid_inner(slice_z=0, size=2, size_r=undef, size_h=undef) {
     if (size_r == undef) {
         lid_inner(slice_z=slice_z,size=size,size_r=size/2,size_h=size_h) {
             children();
@@ -30,35 +30,38 @@ module lid_inner(slice_z=0, size=1, size_r=undef, size_h=undef) {
         }
     } else {
         echo(size_r, size_h);
-        tz(slice_z) intersection() {
-            difference() {
-                minkowski() {
-                    slice(slice_z=slice_z) {
-                        children();
+        tz(slice_z) minkowski() {
+            intersection() {
+                difference() {
+                    minkowski() {
+                        slice(slice_z=slice_z) {
+                            children();
+                        }
+                        union() {
+                            cylinder(d1=size_r*2,d2=0,h=size_h/2);
+                            mirror([0,0,1]) cylinder(d1=size_r*2,d2=0,h=size_h/2);
+                        }
                     }
-                    union() {
-                        cylinder(d1=size_r*2,d2=0,h=size_h/2);
-                        mirror([0,0,1]) cylinder(d1=size_r*2,d2=0,h=size_h/2);
+                    minkowski() {
+                        slice(slice_z=slice_z) {
+                            children();
+                        }
+                        cylinder(d=EPS,h=BIG,center=true);
                     }
                 }
                 minkowski() {
-                    slice(slice_z=slice_z) {
+                    slice(slice_z=slice_z,do_hull=false) {
                         children();
                     }
-                    cylinder(d=EPS,h=BIG,center=true);
+                    cylinder(d=size_r*2,h=BIG,center=true);
                 }
             }
-            minkowski() {
-                slice(slice_z=slice_z,do_hull=false) {
-                    children();
-                }
-                cylinder(d=size_r*2,h=BIG,center=true);
-            }
+            cube(EPS*10);
         }
     }
 }
 
-module lid_outer(slice_z=0, size=1, thick=2, size_r=undef, size_h=undef) {
+module lid_outer(slice_z=0, size=2, thick=2, size_r=undef, size_h=undef) {
     if (size_r == undef) {
         lid_outer(slice_z=slice_z,size=size,thick=thick,size_r=size/2,size_h=size_h) {
             children();
@@ -90,7 +93,7 @@ module lid_outer(slice_z=0, size=1, thick=2, size_r=undef, size_h=undef) {
     }
 }
 
-module autolid(lid=undef, top_z=0, size=1, thick=2, size_r=undef, size_h=undef) {
+module autolid(lid=undef, top_z=0, size=2, thick=2, size_r=undef, size_h=undef) {
     if (lid == undef) {
         for (i=[false,true]) {
             autolid(lid=i, top_z=top_z, size=size, thick=thick, size_r=size_r, size_h=size_h) {
