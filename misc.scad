@@ -91,6 +91,24 @@ module tz(dz) {
   }
 }
 
+module rx(dx) {
+  rotate([dx,0,0]) {
+    children();
+  }
+}
+
+module ry(dy) {
+  rotate([0,dy,0]) {
+    children();
+  }
+}
+
+module rz(dz) {
+  rotate([0,0,dz]) {
+    children();
+  }
+}
+
 //// Octants
 // Useful for cutting away sections of the...everything
 
