@@ -12,6 +12,8 @@ module flattedShaft(h=5, r=2.5, flat_depth=0.5, center=false) {
   }
 }
 
+function sqr(x) = x*x;
+
 // Make a block go away.  Useful for debugging probably.
 // EXCEPT that I've discovered that * does that, but better.
 module skip() {
@@ -24,24 +26,64 @@ module skip() {
 }
 
 // Note that this is kinda slow
-module perforate(nx=100,ny=100,size=1,diam=0.5) { //TODO Add dir
-  difference() {
+module perforate(nx=100,ny=100,t=0.5,t0=0.5) { //TODO Add dir
+  intersection() {
     children();
-    for (x = [-nx/2:nx/2]) {
-      translate([x*2*diam,0,0])
-        cube([diam,$FOREVER,$FOREVER],center=true);
-    }
-    for (y = [-ny/2:ny/2]) {
-      translate([0,y*2*diam,0])
-        cube([$FOREVER,diam,$FOREVER],center=true);
+    union() {
+      for (x = [-nx/2:nx/2]) {
+        translate([x*(t+t0),0,0])
+          cube([t,$FOREVER,$FOREVER],center=true);
+      }
+      for (y = [-ny/2:ny/2]) {
+        translate([0,y*(t+t0),0])
+          cube([$FOREVER,t,$FOREVER],center=true);
+      }
     }
   }
 }
 
-// Useful for minkowski 2D and 3D shapes together
-module flat3d() {
-  linear_extrude(height=$EPS)
+
+// Note that this is kinda slow...and buggy
+module radialPerforate(d=10,a=45,t=5,t0=5,h=100) {
+  intersection() {
     children();
+    union() {
+      n = (2*PI*(d/2))/(t+t0);
+      i = 0;
+      for (i = [0:n-1]) {
+      //for (i = [0]) {
+        ai = 360*i/n;
+        rz(ai) cmirror([1,0,0]) linear_extrude(height=h,twist=6*h,slices=100,center=true) ty(d/2) square([t,d],center=true);
+      }
+    }
+  }
+}
+
+//radialPerforate(t=5,t0=5) {
+//    difference() {
+//        cylinder(d=105,h=40,center=true);
+//        cylinder(d=9.5,h=1000,center=true);
+//    }
+//}
+
+// Useful for minkowski 2D and 3D shapes together
+module flat3d(center=false) {
+  linear_extrude(height=$EPS,center=center)
+    children();
+}
+
+module shell(all_sides=true,t=1) {
+    difference() {
+        minkowski() {
+            children();
+            if (all_sides) {
+                sphere(d=t*2);
+            } else {
+                flat3d(center=true) circle(d=t*2);
+            }
+        }
+        children();
+    }
 }
 
 module cmirror(v) {
@@ -70,6 +112,19 @@ module cscale(v) {
   scale(v) {
     children();
   }
+}
+
+module around(p=[0,0,0],r=[0,0,0]) {
+    translate(p) rotate(r) translate(-p) {
+        children();
+    }
+}
+
+module caround(p=[0,0,0],r=[0,0,0]) {
+    children();
+    around(p, r) {
+        children();
+    }
 }
 
 //// Shorthands
@@ -145,6 +200,25 @@ module OXpYmZm(delta=[0,0,0]) {translate(delta) halfSpace([+1,-1,-1]);}
 module OXpYmZp(delta=[0,0,0]) {translate(delta) halfSpace([+1,-1,+1]);}
 module OXpYpZm(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,-1]);}
 module OXpYpZp(delta=[0,0,0]) {translate(delta) halfSpace([+1,+1,+1]);}
+
+
+//// Quadrants
+// Useful for cutting away sections of the...everything, but in 2d
+
+// Pick a dir, then use -1 or 1 ; e.g. [1,0,0], [0,0,-1], etc.
+module halfPlane(dir=[0,0]) {
+    translate(dir*($FOREVER/2)) square($FOREVER,center=true);
+}
+
+module QXm(delta=[0,0]) {translate(delta) halfPlane([-1,0]);}
+module QXp(delta=[0,0]) {translate(delta) halfPlane([+1,0]);}
+module QYm(delta=[0,0]) {translate(delta) halfPlane([0,-1]);}
+module QYp(delta=[0,0]) {translate(delta) halfPlane([0,+1]);}
+
+module QXmYm(delta=[0,0]) {translate(delta) halfPlane([-1,-1]);}
+module QXmYp(delta=[0,0]) {translate(delta) halfPlane([-1,+1]);}
+module QXpYm(delta=[0,0]) {translate(delta) halfPlane([+1,-1]);}
+module QXpYp(delta=[0,0]) {translate(delta) halfPlane([+1,+1]);}
 
 
 //// Overhang tools
@@ -371,12 +445,12 @@ module bearingPlacerStick(size, bearing_diam, outer=true) {
 /*From https://gist.github.com/boredzo/fde487c724a40a26fa9c
  *
  *skew takes an array of six angles:
- *x along y
- *x along z
  *y along x
- *y along z
  *z along x
+ *x along y
  *z along y
+ *x along z
+ *y along z
  */
 module skew(dims) {
   matrix = [
@@ -494,3 +568,14 @@ module nailTab(hole=1.5,head=11,back=1,supportF=1.5,t=3,stickout=0) {
         cylinder(d=hole,h=t);
     }
 }
+
+
+//// Math
+
+/**
+`d` diameter of arc
+`l` length of arc
+returns angle of arc
+...This is weird how simple it is
+*/
+function arcAngle(d,l) = (l/(d/2))*(360/(2*PI));
