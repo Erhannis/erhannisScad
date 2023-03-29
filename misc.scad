@@ -1,5 +1,6 @@
 $FOREVER = 2000;
 $EPS=1e-300;
+INCH = 25.4;
 
 // I guess I should mention that while this method has been 90% overhauled, its essence originally came from inside the nema17_stepper module of https://github.com/revarbat/BOSL
 module flattedShaft(h=5, r=2.5, flat_depth=0.5, center=false) {
@@ -86,10 +87,39 @@ module shell(all_sides=true,t=1) {
     }
 }
 
-module cmirror(v) {
-  children();
-  mirror(v) {
+/**
+Cone between two arbitrary circles.
+`c` is the [x,y,z] position of the center of the circle.
+`a` is the [x,y,z] rotation of the circle.
+`d` is the diameter of the circle.
+`pad` is added to the height of the extrusion of the circles.  Add e.g. 0.0001 if you're removing the center of an omnicone, or you'll probably get weird thin membranes.
+*/
+module omnicone(c1, a1, d1, c2, a2, d2, pad=0) {
+    hull() {
+        translate(c1) rotate(a1) linear_extrude(height=1e-10+pad, center=true) {
+            circle(d=d1);
+        }
+        translate(c2) rotate(a2) linear_extrude(height=1e-10+pad, center=true) {
+            circle(d=d2);
+        }
+    }
+}
+
+/**
+`center` is the point around which the transformation is made.
+*/
+
+module cmirror(v, center=undef) {
+  if (center == undef) {
+      children();
+      mirror(v) {
+        children();
+      }
+  } else {
     children();
+    translate(center) mirror(v) translate(-center) {
+      children();
+    }
   }
 }
 
@@ -100,17 +130,31 @@ module ctranslate(v) {
   }
 }
 
-module crotate(v) {
-  children();
-  rotate(v) {
+module crotate(v, center=undef) {
+  if (center == undef) {
+      children();
+      rotate(v) {
+        children();
+      }
+  } else {
     children();
+    translate(center) rotate(v) translate(-center) {
+      children();
+    }
   }
 }
 
-module cscale(v) {
-  children();
-  scale(v) {
+module cscale(v, center=undef) {
+  if (center == undef) {
     children();
+    scale(v) {
+      children();
+    }
+  } else {
+    children();
+    translate(center) scale(v) translate(-center) {
+      children();
+    }
   }
 }
 
@@ -126,6 +170,30 @@ module caround(p=[0,0,0],r=[0,0,0]) {
         children();
     }
 }
+
+/**
+Rotate a vector.
+
+Example; the cubes end up at the same position:
+
+a1 = rands(-180,180,3);
+d1 = rands(-10,10,3);
+a2 = rands(-180,180,3);
+d2 = rands(-10,10,3);
+a3 = rands(-180,180,3);
+d3 = rands(-10,10,3);
+
+union() {
+    translate(ftranslate(d3, frotate(a3, ftranslate(d2, frotate(a2, ftranslate(d1, frotate(a1, [0,0,0]))))))) cube(center=true);
+    translate(d3) rotate(a3) translate(d2) rotate(a2) translate(d1) rotate(a1) cube(center=true);
+}
+
+*/
+function frotate(a, v) = [[cos(a[2])*cos(a[1]), cos(a[2])*sin(a[1])*sin(a[0])-sin(a[2])*cos(a[0]), cos(a[2])*sin(a[1])*cos(a[0])+sin(a[2])*sin(a[0])],
+         [sin(a[2])*cos(a[1]), sin(a[2])*sin(a[1])*sin(a[0])+cos(a[2])*cos(a[0]), sin(a[2])*sin(a[1])*cos(a[0])-cos(a[2])*sin(a[0])],
+         [-sin(a[1]), cos(a[1])*sin(a[0]), cos(a[1])*cos(a[0])]]*v;
+
+function ftranslate(d, v) = v+d;
 
 //// Shorthands
 module tx(dx) {
@@ -146,21 +214,79 @@ module tz(dz) {
   }
 }
 
-module rx(dx) {
-  rotate([dx,0,0]) {
-    children();
+/**
+`center` is the point around which the rotation is made.
+*/
+
+module rx(dx, center=undef) {
+  if (center == undef) {
+    rotate([dx,0,0]) {
+      children();
+    }
+  } else {
+    translate(center) rotate([dx,0,0]) translate(-center) {
+      children();
+    }
   }
 }
 
-module ry(dy) {
-  rotate([0,dy,0]) {
-    children();
+module ry(dy, center=undef) {
+  if (center == undef) {
+    rotate([0,dy,0]) {
+      children();
+    }
+  } else {
+    translate(center) rotate([0,dy,0]) translate(-center) {
+      children();
+    }
   }
 }
 
-module rz(dz) {
-  rotate([0,0,dz]) {
-    children();
+module rz(dz, center=undef) {
+  if (center == undef) {
+    rotate([0,0,dz]) {
+      children();
+    }
+  } else {
+    translate(center) rotate([0,0,dz]) translate(-center) {
+      children();
+    }
+  }
+}
+
+module mx(center=undef) {
+  if (center == undef) {
+    mirror([1,0,0]) {
+      children();
+    }
+  } else {
+    translate(center) mirror([1,0,0]) translate(-center) {
+      children();
+    }
+  }
+}
+
+module my(center=undef) {
+  if (center == undef) {
+    mirror([0,1,0]) {
+      children();
+    }
+  } else {
+    translate(center) mirror([0,1,0]) translate(-center) {
+      children();
+    }
+  }
+}
+
+module mz(center=undef) {
+  if (center == undef) {
+    mirror([0,0,1]) {
+      children();
+    }
+  } else {
+    translate(center) mirror([0,0,1]) translate(-center) {
+      children();
+    }
   }
 }
 
@@ -569,6 +695,50 @@ module nailTab(hole=1.5,head=11,back=1,supportF=1.5,t=3,stickout=0) {
     }
 }
 
+// Internal, really.  Teardrop.
+module ztd(d=10,t=5) {
+    rx(90) {
+        cylinder(d=d,h=t,center=true);
+        rz(45) tz(-t/2) cube([d/2,d/2,t]);
+    }
+}
+
+/*
+Stick this on a surface, then put screws in it to lever the wedge outwards and e.g. jam something into something else.
+
+E.g.
+screwWedge(hole_count=2,ignore_overhang=false);
+tz(50) screwWedge(,hole_count=2,ignore_overhang=true);
+*/
+module screwWedge(arm_l=30,arm_h=50,arm_t=2,wedge_angle=30,wedge_gap=0.5,sw_width=10,shoulder_l=10,hole_d=5,hole_count=1,ignore_overhang=false) {
+    ty(shoulder_l) {
+        SECOND_OVERHANG_SZ = ignore_overhang ? 0 : arm_l;
+        if (!ignore_overhang) {
+            tz(-SECOND_OVERHANG_SZ) {
+                rz(-90) tx(shoulder_l/2) ledge(shoulder_l,sw_width);
+                my() cube([sw_width,shoulder_l,SECOND_OVERHANG_SZ]);
+            }
+        }
+        difference() {
+            my() cube([sw_width,shoulder_l,arm_h]);
+            for (i = [1:hole_count]) {
+                translate([hole_d/2+(sw_width-arm_t-hole_d)*0.2,0,(i-0.5)*(arm_h/hole_count)]) ztd(d=hole_d,t=$FOREVER);
+            }
+        }
+        difference() {
+            union() {
+                tx(sw_width) mx() tz(-SECOND_OVERHANG_SZ) cube([arm_t,arm_l,arm_h+SECOND_OVERHANG_SZ]);
+                difference() {
+                    tz(-SECOND_OVERHANG_SZ) cube([sw_width,arm_l,arm_h+SECOND_OVERHANG_SZ]);
+                    tx(wedge_gap) ty(arm_l) rz(wedge_angle) OXm();
+                }
+            }
+            if (!ignore_overhang) {
+                tz(-SECOND_OVERHANG_SZ) rx(45) OZm();
+            }
+        }
+    }
+}
 
 //// Math
 
