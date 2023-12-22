@@ -73,17 +73,71 @@ module flat3d(center=false) {
     children();
 }
 
-module shell(all_sides=true,t=1) {
-    difference() {
-        minkowski() {
-            children();
-            if (all_sides) {
-                sphere(d=t*2);
-            } else {
-                flat3d(center=true) circle(d=t*2);
+module shell(center_on_border=false,all_sides=true,t=1) {
+    if (center_on_border) {
+        difference() {
+            minkowski() {
+                children();
+                if (all_sides) {
+                    sphere(d=t);
+                } else {
+                    flat3d(center=true) circle(d=t);
+                }
+            }
+            difference() {
+                children();
+                minkowski() {
+                    shell(center_on_border=false,all_sides=all_sides,t=t/2) {
+                        children();
+                    }
+                    if (all_sides) {
+                        sphere(d=t);
+                    } else {
+                        flat3d(center=true) circle(d=t);
+                    }
+                }
             }
         }
-        children();
+    } else {
+        difference() {
+            minkowski() {
+                children();
+                if (all_sides) {
+                    sphere(d=t*2);
+                } else {
+                    flat3d(center=true) circle(d=t*2);
+                }
+            }
+            children();
+        }
+    }
+}
+
+module shell2d(center_on_border=false,t=1) {
+    if (center_on_border) {
+        difference() {
+            minkowski() {
+                children();
+                circle(d=t);
+            }
+            difference() {
+                children();
+                minkowski() {
+                    shell2d(center_on_border=false,t=t/2) {
+                        children();
+                    }
+                    circle(d=t);
+                }
+            }
+        }
+    } else {
+        difference() {
+            minkowski() {
+                children();
+                circle(d=t*2);
+            }
+            children();
+        }
     }
 }
 
@@ -105,9 +159,27 @@ module omnicone(c1, a1, d1, c2, a2, d2, pad=0) {
     }
 }
 
+module ctranslate(v) {
+  if (is_list(v[0])) {
+      for (i = v) {
+          echo(i);
+          translate(i) {
+            children();
+          }
+      }
+  } else {
+      children();
+      translate(v) {
+        children();
+      }
+  }
+}
+
 /**
 `center` is the point around which the transformation is made.
 */
+
+//RAINY Permit lists for the other ctransforms, and incorporate center somehow maybe
 
 module cmirror(v, center=undef) {
   if (center == undef) {
@@ -120,13 +192,6 @@ module cmirror(v, center=undef) {
     translate(center) mirror(v) translate(-center) {
       children();
     }
-  }
-}
-
-module ctranslate(v) {
-  children();
-  translate(v) {
-    children();
   }
 }
 
@@ -168,6 +233,15 @@ module caround(p=[0,0,0],r=[0,0,0]) {
     children();
     around(p, r) {
         children();
+    }
+}
+
+module phull() {
+    hull() {
+        children();
+        linear_extrude(height=$EPS) projection() {
+            children();
+        }
     }
 }
 
