@@ -162,7 +162,6 @@ module omnicone(c1, a1, d1, c2, a2, d2, pad=0) {
 module ctranslate(v) {
   if (is_list(v[0])) {
       for (i = v) {
-          echo(i);
           translate(i) {
             children();
           }
@@ -814,6 +813,40 @@ module screwWedge(arm_l=30,arm_h=50,arm_t=2,wedge_angle=30,wedge_gap=0.5,sw_widt
     }
 }
 
+/**
+U-shape, to cut out a slot for cable ties.
+Centered on origin, flat on z+.
+*/
+module cableTie(t=4,d=10,h=$FOREVER) {
+  translate([-t/2,-(d+t)/2,0]) {
+    ctranslate([0,d,0]) cube([t,t,h]);
+    cube([t,d+t,t]);
+  }
+}
+
+/**
+Makes an open-top box shape.  Note: if `center`, centers as though
+there were a top wall of `thickness` present, i.e., it centers the
+inside of the box.
+*/
+module box(dims=[10,10,10], thickness=1, center=false) {
+    difference() {
+        if (center) {
+            tz(-thickness/2) {
+                difference() {
+                    cube(dims+[thickness*2,thickness*2,thickness],center=true);
+                    tz(thickness/2) cube(dims,center=true);
+                }
+            }
+        } else {
+            difference() {
+                cube(dims+[thickness*2,thickness*2,thickness],center=false);
+                translate(thickness*[1,1,1]) cube(dims,center=false);
+            }
+        }
+    }
+}
+
 //// Math
 
 /**
@@ -823,3 +856,4 @@ returns angle of arc
 ...This is weird how simple it is
 */
 function arcAngle(d,l) = (l/(d/2))*(360/(2*PI));
+
