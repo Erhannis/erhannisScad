@@ -142,6 +142,53 @@ module shell2d(center_on_border=false,t=1) {
 }
 
 /**
+Picks out the $EPS-thick layer above z=0.
+*/
+module base() {
+  intersection() {
+    children();
+    linear_extrude(height=$EPS) {
+      square($FOREVER,center=true);
+    }
+  }
+}
+
+/**
+Round the bottom corners or a print, for avoiding corner-curl-up.
+Assumes the are on the XY plane is the bottom, that touches the print bed.
+Optimized for rectangular bases, coordinate aligned - but use `angle` for other angles.
+Has trouble with separate objects too close together; try 2r apart.  (Not sure whether that can be reasonably fixed.)
+Is sortof computationally heavy.
+*/
+module cornerRound(r=3, angle=0) {
+  F = sqrt(2);
+  difference() {
+    children();
+    minkowski() {
+      difference() {
+        minkowski() {
+          base() children();
+          linear_extrude(height=$EPS) {
+            rz(angle) rz(45) square(r*F,center=true);
+          }
+        }
+        minkowski() {
+          base() children();
+          linear_extrude(height=$EPS) {
+            rz(angle) rz(45) square(r*F-$EPS,center=true);
+          }
+        }
+      }
+      rz(angle) tz(r) difference() {
+        //pyramid(h=sqrt(2)*r*F-1.5*$EPS,l=sqrt(2)*r*F-1.5*$EPS);
+        cube(2*(sqrt(2)*r*F-1.5*$EPS), center=true);
+        crotate([0,0,90]) crotate([0,0,180]) rx(45) OZp();
+      }
+    }
+  }
+}
+    
+/**
 Cone between two arbitrary circles.
 `c` is the [x,y,z] position of the center of the circle.
 `a` is the [x,y,z] rotation of the circle.
@@ -459,6 +506,28 @@ module house(size, center=true) {
 }
 //house([10,10,10]);
 
+module boltAccess(d=10, h=20, angle=90) {
+  difference() {
+    union() {
+      SZ = $FOREVER/2;
+      cylinder(d=d, h=h);
+      tz(h) sphere(d=d);
+      difference() {
+        tx(-(d/2)/sin(angle/2)) {
+          tz(h) ry(90) omnicone([0,0,0], [0,0,0], 0.001, [0,0,SZ], [0,0,0], 2*SZ);
+          rz(-45) cube([SZ*sqrt(2),SZ*sqrt(2),h]);
+        }
+
+        // Outer edge
+        tx(-(d/2)/sin(angle/2)) OXp([SZ,0,0]);
+        
+        // Floor
+        tx(-(d/2)*cos(90-angle/2)) OXm();        
+      }
+    }
+    OZm();
+  }
+}
 
 //// Pin joiner
 
@@ -682,6 +751,8 @@ module triangle(height=10,width=undef,dir=[0,1]) {
 
 /**
 I didn't do the math on this; I just adjusted numbers until it lined up really close.
+Also, it's a sorta lopsided three top-face thing that I no longer remember what I needed it for.
+Something else provides a more normal "pyramid" module.
 */
 module halfPyramid(height=20) {
   //translate([0,0,-height])
