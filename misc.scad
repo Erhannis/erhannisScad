@@ -918,6 +918,23 @@ module box(dims=[10,10,10], thickness=1, center=false) {
     }
 }
 
+// US Quarter, for scale reference
+module usQuarter() {
+  cylinder(d=24.26, h=1.75);
+}
+
+module beltBuckle(W=50,GAP=3.5,SX=4,SZ=4,N=3) {
+  for (i=[0:N-1]) {
+    translate([i,0,0]*(SX+GAP)) cube([SX,W+2*SX,SZ]);
+  }
+  ctranslate([0,W+SX,0]) cube([N*SX+(N-1)*GAP,SX,SZ]);
+}
+
+// Compression slot for a dowel along the y axis; subtract out of a Z+ surface (leaving a concave hollow)
+module dowelSlot(D=9.4) {
+  tz(D*0.5) rx(90) rz(30) cylinder(d=D/cos(60), h=$FOREVER, $fn=3, center=true);
+}
+
 //// Math
 
 /**
