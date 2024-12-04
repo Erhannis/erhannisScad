@@ -187,7 +187,56 @@ module cornerRound(r=3, angle=0) {
     }
   }
 }
-    
+
+/**
+Like `base` but at any z, plus frills.
+*/
+module slice(slice_z=0, drop_z=true, do_hull=true) {
+    tz(drop_z ? 0 : slice_z) intersection() {
+        if (do_hull) {
+            tz(-slice_z) hull() children();
+        } else {
+            tz(-slice_z) children();
+        }
+        cube([$FOREVER,$FOREVER,$EPS],center=true);
+    }
+}
+
+module autochamfer0(z=0, r=3) {
+  tz(z) cmirror([0,0,1]) minkowski() {
+    linear_extrude(height=$EPS) difference() {
+      minkowski() {
+        difference() {
+          square($FOREVER, center=true);
+          projection() slice(slice_z=z, drop_z=false, do_hull=false) children();
+        }
+        circle(r=$EPS);
+      }
+      difference() {
+        square($FOREVER, center=true);
+        projection() slice(slice_z=z, drop_z=false, do_hull=false) children();
+      }
+    }
+    cylinder(d1=r*2, d2=0, h=r);
+  }
+}
+
+/**
+Chamfer at a particular z-height.  (Computationally heavy.)
+Turn off `apply` to just get the subtractive chamfer shape, like for if you want to only
+chamfer a particular area.
+*/
+module autochamfer(z=0, r=3, apply=true) {
+  if (apply) {
+    difference() {
+      children();
+      autochamfer0(z, r) children();
+    }
+  } else {
+    autochamfer0(z, r) children();
+  }
+}
+ 
 /**
 Cone between two arbitrary circles.
 `c` is the [x,y,z] position of the center of the circle.
