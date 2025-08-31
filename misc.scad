@@ -292,14 +292,30 @@ module cmirror(v, center=undef) {
 
 module crotate(v, center=undef) {
   if (center == undef) {
+    if (is_list(v[0])) {
+      for (i = v) {
+        rotate(i) {
+          children();
+        }
+      }
+    } else {
       children();
       rotate(v) {
         children();
       }
+    }
   } else {
-    children();
-    translate(center) rotate(v) translate(-center) {
+    if (is_list(v[0])) {
+      for (i = v) {
+        translate(center) rotate(i) translate(-center) {
+          children();
+        }
+      }
+    } else {
       children();
+      translate(center) rotate(v) translate(-center) {
+        children();
+      }
     }
   }
 }
