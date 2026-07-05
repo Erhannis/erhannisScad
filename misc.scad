@@ -43,6 +43,17 @@ module perforate(nx=100,ny=100,t=0.5,t0=0.5) { //TODO Add dir
   }
 }
 
+// Given how the others were, this is probably also slow
+module perforation(nx=100,ny=100,t=0.5,t0=0.5) {
+  union() {
+    for (x = [-nx/2:nx/2]) {
+      for (y = [-ny/2:ny/2]) {
+        translate([x*(t+t0),y*(t+t0),0])
+          cube([t,t,$FOREVER],center=true);
+      }
+    }
+  }
+}
 
 // Note that this is kinda slow...and buggy
 module radialPerforate(d=10,a=45,t=5,t0=5,h=100) {
@@ -320,6 +331,26 @@ module crotate(v, center=undef) {
   }
 }
 
+/**
+Fans out copies of children, like crotate(z) in increments of 360/n.
+//RAINY Maybe permit select axis?
+*/
+module cfan(n, center=undef) {
+  if (center == undef) {
+    for (a = [0:360/n:360]) {
+      rotate([0,0,a]) {
+        children();
+      }
+    }
+  } else {
+    for (a = [0:360/n:360]) {
+      translate(center) rotate([0,0,a]) translate(-center) {
+        children();
+      }
+    }
+  }
+}
+
 module cscale(v, center=undef) {
   if (center == undef) {
     children();
@@ -395,6 +426,24 @@ module ty(dy) {
 
 module tz(dz) {
   translate([0,0,dz]) {
+    children();
+  }
+}
+
+module sx(fx) {
+  scale([fx,1,1]) {
+    children();
+  }
+}
+
+module sy(fy) {
+  scale([1,fy,1]) {
+    children();
+  }
+}
+
+module sz(fz) {
+  scale([1,1,fz]) {
     children();
   }
 }
@@ -983,6 +1032,17 @@ module box(dims=[10,10,10], thickness=1, center=false) {
     }
 }
 
+/**
+Cuboid region.  [[-X,X],[-Y,Y],[-Z,Z]]
+Example:
+region([[-10,50],[-10,30],[-20,30]]);
+*/
+module region(ranges) {
+  sizes = [for (i = ranges) (i[1]-i[0])];
+  offsets = [for (i = ranges) i[0]];
+  translate(offsets) cube(sizes);
+}
+
 // US Quarter, for scale reference
 module usQuarter() {
   cylinder(d=24.26, h=1.75);
@@ -1009,4 +1069,6 @@ returns angle of arc
 ...This is weird how simple it is
 */
 function arcAngle(d,l) = (l/(d/2))*(360/(2*PI));
+
+function xor(a, b) = (a || b) && (!(a && b));
 
