@@ -629,6 +629,27 @@ module vslot2d(size) {
     translate([0,size[1]/2]) rotate([0,0,45]) square([sqrt(1/2)*size[0],sqrt(1/2)*size[0]],center=true);
 }
 
+/**
+To remove extra from one corner of an intersection of vslots
+Example:
+translate([-20,-30]) vslotCorner([10,80,20]);
+tx(-20) ty(-40) vslot([10,80,20]);
+ty(-30) rz(90) vslot([10,80,20]);
+*/
+module vslotCorner(size, bounds=400) {
+  extra_sz = size[0]/2;
+  cmz() translate([0,0,extra_sz+size[2]/2]) intersection() {
+    difference() {
+      OXpYp();
+      rx(45) OZp();
+      ry(-45) OZp();
+      OZm([0,0,-size[2]-extra_sz]);
+    }
+    cube(bounds,center=true);
+  }
+}
+
+// To remove extra from one corner of an intersection of houses
 module house(size, center=true) {
   cube([size[0],size[1],size[2]],center=center);
   difference() {
@@ -642,6 +663,20 @@ module house2d(size, center=true) {
   difference() {
     translate([0,center ? size[1]/2 : size[1]]) rotate([0,0,-45]) square([sqrt(1/2)*size[0],sqrt(1/2)*size[0]],center=center);
     QYm();
+  }
+}
+
+module houseCorner(size, bounds=400, center=true) {
+  extra_sz = size[0]/2;
+  translate(center ? [0,0,0] : [size[0]/2,size[0]/2,size[2]/2])
+  translate([0,0,extra_sz+size[2]/2]) intersection() {
+    difference() {
+      OXpYp();
+      rx(45) OZp();
+      ry(-45) OZp();
+      OZm([0,0,-size[2]-extra_sz]);
+    }
+    cube(bounds,center=true);
   }
 }
 
@@ -1021,6 +1056,24 @@ module screwWedge(arm_l=30,arm_h=50,arm_t=2,wedge_angle=30,wedge_gap=0.5,sw_widt
             }
         }
     }
+}
+
+module ribbing(angle=45,pitch=2,id=10,od=undef,h=20) {
+  depth = 0.5*pitch*tan(90-angle);
+  if (od != undef) {
+    ribbing(angle=angle,pitch=pitch,id=od-2*depth,h=h);
+  } else {
+    rotate_extrude() {
+      tx(id/2) difference() {
+        union() {
+          for (oy=[0:pitch:h]) {
+            ty(oy+pitch/2) rz(-90) triangle(height=depth,width=pitch);
+          }
+        }
+        QYp([0,h]);
+      }
+    }
+  }
 }
 
 /**
