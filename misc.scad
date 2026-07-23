@@ -301,6 +301,18 @@ module cmirror(v, center=undef) {
   }
 }
 
+module cmx(center=undef) {
+  cmirror([1,0,0], center=center) children();
+}
+
+module cmy(center=undef) {
+  cmirror([0,1,0], center=center) children();
+}
+
+module cmz(center=undef) {
+  cmirror([0,0,1], center=center) children();
+}
+
 module crotate(v, center=undef) {
   if (center == undef) {
     if (is_list(v[0])) {
@@ -611,6 +623,12 @@ module vslot(size) {
     translate([0,0,size[2]/2]) rotate([0,45,0]) cube([sqrt(1/2)*size[0],size[1],sqrt(1/2)*size[0]],center=true);
 }
 
+module vslot2d(size) {
+  square([size[0],size[1]],center=true);
+  for (i = [0,1]) mirror([0,i])
+    translate([0,size[1]/2]) rotate([0,0,45]) square([sqrt(1/2)*size[0],sqrt(1/2)*size[0]],center=true);
+}
+
 module house(size, center=true) {
   cube([size[0],size[1],size[2]],center=center);
   difference() {
@@ -618,7 +636,14 @@ module house(size, center=true) {
     OZm();
   }
 }
-//house([10,10,10]);
+
+module house2d(size, center=true) {
+  square([size[0],size[1]],center=center);
+  difference() {
+    translate([0,center ? size[1]/2 : size[1]]) rotate([0,0,-45]) square([sqrt(1/2)*size[0],sqrt(1/2)*size[0]],center=center);
+    QYm();
+  }
+}
 
 module boltAccess(d=10, h=20, angle=90) {
   difference() {
