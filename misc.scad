@@ -301,18 +301,6 @@ module cmirror(v, center=undef) {
   }
 }
 
-module cmx(center=undef) {
-  cmirror([1,0,0], center=center) children();
-}
-
-module cmy(center=undef) {
-  cmirror([0,1,0], center=center) children();
-}
-
-module cmz(center=undef) {
-  cmirror([0,0,1], center=center) children();
-}
-
 module crotate(v, center=undef) {
   if (center == undef) {
     if (is_list(v[0])) {
@@ -442,6 +430,18 @@ module tz(dz) {
   }
 }
 
+module ctx(dx) {
+  ctranslate([dx,0,0]) children();
+}
+
+module cty(dy) {
+  ctranslate([0,dy,0]) children();
+}
+
+module ctz(dz) {
+  ctranslate([0,0,dz]) children();
+}
+
 module sx(fx) {
   scale([fx,1,1]) {
     children();
@@ -500,6 +500,18 @@ module rz(dz, center=undef) {
   }
 }
 
+module crx(dx, center=undef) {
+  crotate([dx,0,0], center=center) children();
+}
+
+module cry(dy, center=undef) {
+  crotate([0,dy,0], center=center) children();
+}
+
+module crz(dz, center=undef) {
+  crotate([0,0,dz], center=center) children();
+}
+
 module mx(center=undef) {
   if (center == undef) {
     mirror([1,0,0]) {
@@ -534,6 +546,18 @@ module mz(center=undef) {
       children();
     }
   }
+}
+
+module cmx(center=undef) {
+  cmirror([1,0,0], center=center) children();
+}
+
+module cmy(center=undef) {
+  cmirror([0,1,0], center=center) children();
+}
+
+module cmz(center=undef) {
+  cmirror([0,0,1], center=center) children();
 }
 
 //// Octants
@@ -787,6 +811,60 @@ module pinJoinerPin(depth=5,width=15,height=15,wedgeAngle=60,pin_height_slop=DEF
 
     // Pin
     translate([-5,3,0]) rotate([-90,0,0]) translate([0,-5*PIN_DEPTH_FACTOR,-DEF_PHSLOP/4]) pinJoinerPin();
+}
+
+
+//// Puzzle joiner
+
+module puzzle_plus(t=$FOREVER, vcenter=true, neck_t=3, neck_l=3, ball_d=5, x_offset=3) {
+  tz(vcenter ? 0 : t/2) tx(-x_offset) linear_extrude(height=t, center=true) {
+    ty(ball_d/2+neck_l) circle(d=ball_d);
+    square([neck_t, ball_d+2*neck_l], center=true);
+  }
+}
+
+module puzzle_minus(t=$FOREVER, neck_t=3, neck_l=3, ball_d=5, x_offset=3, slop=0.1) {
+  rz(180) tx(-x_offset) linear_extrude(height=t, center=true) {
+    ty(ball_d/2+neck_l) circle(d=ball_d+2*slop);
+    square([neck_t+2*slop, ball_d+2*neck_l], center=true);
+  }
+}
+
+/**
+(Rotates puzzle bits, then translates)
+*/
+module puzzle_joiner(t=$FOREVER, tp=undef, tm=undef, vcenter=true, neck_t=3, neck_l=3, ball_d=5, x_offset=3, slop=0.1, txyz=[0,0,0], rxyz=[0,0,0]) {
+  TP = (tp == undef) ? t : tp;
+  TM = (tm == undef) ? $FOREVER : tm;
+  difference() {
+    union() {
+      children();
+      translate(txyz) rotate(rxyz) puzzle_plus(t=TP, vcenter=vcenter, neck_t=neck_t, neck_l=neck_l, ball_d=ball_d, x_offset=x_offset);
+    }
+    translate(txyz) rotate(rxyz) puzzle_minus(t=TM, neck_t=neck_t, neck_l=neck_l, ball_d=ball_d, x_offset=x_offset, slop=slop);
+  }
+}
+
+// Puzzle joiner example 1
+* puzzle_joiner(t=2, txyz=[0,10,0]) {
+  cube([20,20,2],center=true);
+}
+
+// Puzzle joiner example 2
+* puzzle_joiner(t=2, txyz=[15,0,0], rxyz=[0,0,270])
+puzzle_joiner(t=2, txyz=[0,-15,0], rxyz=[0,0,180])
+puzzle_joiner(t=2, txyz=[-15,0,0], rxyz=[0,0,90])
+puzzle_joiner(t=2, txyz=[0,15,0]) {
+  cube([30,30,2],center=true);
+}
+
+// Puzzle joiner example 3
+* difference() {
+  union() {
+    cube([20,20,2],center=true);
+    ty(10) puzzle_plus(2);
+  }
+  ty(10) puzzle_minus();
 }
 
 
